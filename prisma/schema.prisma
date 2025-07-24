@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  DEVELOPER
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum ActiveStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AddressType {
+  HOME
+  OFFICE
+  OTHER
+}
+
+enum RewardType {
+  EARN // Cộng điểm
+  REDEEM // Trừ điểm
+}
+
+model Admin {
+  id        String       @id @default(uuid())
+  name      String
+  email     String       @unique
+  phone     String?
+  avatar    String?
+  password  String
+  role      AdminRole    @default(STAFF)
+  status    ActiveStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("admins")
+}
+
+model User {
+  id        String       @id @default(uuid())
+  name      String
+  email     String       @unique
+  phone     String?
+  avatar    String?
+  gender    Gender?
+  birthDate DateTime?
+  password  String
+  status    ActiveStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  addresses UserAddress[]
+  rewards   UserReward[]
+
+  @@map("users")
+}
+
+model UserAddress {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address   String
+  lat       Float?
+  lng       Float?
+  isDefault Boolean     @default(false)
+  note      String?
+  type      AddressType @default(HOME)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+  @@map("user_addresses")
+}
+
+model UserReward {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points      Int
+  type        RewardType @default(EARN)
+  description String?
+  createdAt   DateTime   @default(now())
+
+  @@index([userId])
+  @@map("user_rewards")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  token     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("password_reset_tokens")
+}
